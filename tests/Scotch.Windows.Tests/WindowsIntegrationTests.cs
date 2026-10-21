@@ -7,6 +7,18 @@ namespace Scotch.Windows.Tests;
 
 public class WindowsIntegrationTests
 {
+    [Fact] public void Shell_is_topmost_nonactivating_and_off_taskbar()
+    {
+        Sta.Run(()=>
+        {
+            var window=new ClockWindow();
+            Assert.True(window.Topmost);
+            Assert.False(window.ShowActivated);
+            Assert.False(window.ShowInTaskbar);
+            Assert.Equal(System.Windows.WindowStyle.None,window.WindowStyle);
+            window.Close();
+        });
+    }
     [Fact] public void Palette_uses_light_dark_accent_and_contrast_colors()
     {
         var accent=Colors.CornflowerBlue;
