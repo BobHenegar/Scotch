@@ -20,7 +20,7 @@ public class WindowsIntegrationTests
                 ((System.Windows.Forms.ToolStripMenuItem)menu.DropDownItems[(int)preset]).PerformClick();
                 Assert.Equal(preset,chosen);
                 tray.Refresh(true,false,false,preset);
-                Assert.Single(menu.DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>().Where(x=>x.Checked));
+                Assert.Single(menu.DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>(),x=>x.Checked);
                 var window=new ClockWindow();
                 try
                 {

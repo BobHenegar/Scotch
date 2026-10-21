@@ -19,7 +19,7 @@ public sealed class TrayService : IDisposable
         date=new("Show date",null,(_,_)=>toggleDate());
         startup=new("Launch at sign-in",null,(_,_)=>toggleStartup());
         var sizes=new Forms.ToolStripMenuItem("Size");
-        sizeItems=Enum.GetValues<ClockSizePreset>().Select(preset=>new Forms.ToolStripMenuItem(preset.ToString(),null,(_,_)=>selectSize?.Invoke(preset))).ToArray();
+        sizeItems=Enum.GetValues<ClockSizePreset>().Select(preset=>new Forms.ToolStripMenuItem(preset switch {ClockSizePreset.Small=>"Small (75%)",ClockSizePreset.Large=>"Large (150%)",_=>"Medium (100%)"},null,(_,_)=>selectSize?.Invoke(preset))).ToArray();
         sizes.DropDownItems.AddRange(sizeItems);
         Menu.Items.AddRange([avoidance,date,sizes,new Forms.ToolStripSeparator(),new Forms.ToolStripMenuItem("Reset position",null,(_,_)=>reset()),startup,new Forms.ToolStripSeparator(),new Forms.ToolStripMenuItem("Exit",null,(_,_)=>exit())]);
         icon=CreateIcon(Color.SteelBlue);
