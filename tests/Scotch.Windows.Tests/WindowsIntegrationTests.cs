@@ -7,7 +7,7 @@ namespace Scotch.Windows.Tests;
 
 public class WindowsIntegrationTests
 {
-    [Fact] public void Size_menu_selects_one_of_three_proportional_scales()
+    [Fact] public void Size_menu_selects_exactly_one_of_three_presets()
     {
         Sta.Run(()=>
         {
@@ -21,15 +21,6 @@ public class WindowsIntegrationTests
                 Assert.Equal(preset,chosen);
                 tray.Refresh(true,false,false,preset);
                 Assert.Single(menu.DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>(),x=>x.Checked);
-                var window=new ClockWindow();
-                try
-                {
-                    window.ApplySize(preset);
-                    var scale=(System.Windows.Media.ScaleTransform)((System.Windows.FrameworkElement)window.FindName("Face")).LayoutTransform;
-                    var expected=preset==Scotch.Core.ClockSizePreset.Small?0.75:preset==Scotch.Core.ClockSizePreset.Large?1.5:1;
-                    Assert.Equal(expected,scale.ScaleX);Assert.Equal(expected,scale.ScaleY);
-                }
-                finally{window.Close();}
             }
         });
     }
@@ -69,6 +60,8 @@ public class WindowsIntegrationTests
                         Assert.Equal(size,store.Load().Size);
                     }
                     Assert.True(widths[0]<widths[1] && widths[1]<widths[2]);
+                    Assert.InRange(Math.Abs(widths[0]-widths[1]*0.75),0,2);
+                    Assert.InRange(Math.Abs(widths[2]-widths[1]*1.5),0,2);
                 }
             }
             finally
