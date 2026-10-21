@@ -1,0 +1,17 @@
+name: Build Scotch
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Test core
+        run: dotnet test tests/Scotch.Core.Tests -c Release --logger "console;verbosity=normal"
