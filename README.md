@@ -8,11 +8,11 @@ Scotch starts near the upper-right corner of the primary monitor. It uses Window
 
 Download **Scotch-win-x64** from the latest successful [Build Scotch workflow](https://github.com/BobHenegar/scotch/actions/workflows/build.yml), extract the entire ZIP to a permanent folder, and run **Scotch.exe**. The portable build includes the .NET runtime. It is unsigned; Windows may identify it as an unrecognized application.
 
-- Move the mouse near the clock: it slides away quickly.
+- Move the mouse near the clock: it slides away quickly. While avoidance is on, clicks also pass through to the window beneath it.
 - Move clear of its path home: it waits one second, then returns over about two seconds.
 - Press **Ctrl+Alt+C** to freeze or resume avoidance. When paused, drag the clock to choose a new home.
 - Right-click the notification-area clock icon for avoidance, date display, reset position, launch at sign-in, and Exit. When paused, the clock also has a right-click menu.
-- An outlined status dot means avoidance is paused. Hovering the clock shows its status and hotkey.
+- An outlined status dot means avoidance is paused. Hovering the tray icon shows its status and hotkey.
 
 If another app owns Ctrl+Alt+C, Scotch explains the conflict; the tray toggle still works. Release the shortcut in the other app and restart Scotch to register it.
 

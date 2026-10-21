@@ -132,6 +132,7 @@ public partial class ClockWindow : Window
     private void RefreshControls()
     {
         var enabled=movement?.Enabled??true;
+        if(hwnd!=0)WindowInteraction.SetAvoidance(hwnd,enabled);
         tray?.Refresh(enabled,settings.ShowDate,startup.IsEnabled);
         var palette=theme.Read();var accent=new SolidColorBrush(palette.Accent);
         StatusDot.Fill=enabled?accent:Brushes.Transparent;StatusDot.Stroke=accent;
