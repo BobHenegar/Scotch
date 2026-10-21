@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -21,6 +20,7 @@ public partial class ClockWindow : Window
     private readonly StartupService startup=new();
     private readonly HotkeyService hotkey=new();
     private readonly ThemeService theme=new();
+    private readonly RegionalFormatService regionalFormat=new();
     private readonly Stopwatch elapsed=Stopwatch.StartNew();
     private readonly DispatcherTimer timer;
     private ClockSettings settings;
@@ -74,9 +74,7 @@ public partial class ClockWindow : Window
     }
     private void UpdateClock()
     {
-        // Re-read Windows format preferences so changes take effect without restart.
-        var culture=new CultureInfo(CultureInfo.CurrentCulture.Name,true);
-        var text=ClockText.Format(DateTime.Now,culture,settings.ShowDate);
+        var text=ClockText.Format(DateTime.Now,regionalFormat.Culture,settings.ShowDate);
         if(text.Time==lastClockText && DateLabel.Text==text.Date)return;
         lastClockText=text.Time;TimeLabel.Text=text.Time;DateLabel.Text=text.Date;
         DateLabel.Visibility=settings.ShowDate?Visibility.Visible:Visibility.Collapsed;
@@ -174,7 +172,7 @@ public partial class ClockWindow : Window
         {
             case 0x21 when movement is {Enabled:true}: handled=true;return 3; // WM_MOUSEACTIVATE: MA_NOACTIVATE
             case 0x1A: // WM_SETTINGCHANGE: theme, regional format, work area, animations
-                lastClockText=string.Empty;lastSecond=-1;
+                regionalFormat.Refresh();lastClockText=string.Empty;lastSecond=-1;
                 theme.NotifyChanged();QueuePlacement(false);break;
             case 0x31A: case 0x320: theme.NotifyChanged();break; // theme/accent
             case 0x7E: QueuePlacement(true);break; // WM_DISPLAYCHANGE
