@@ -7,6 +7,34 @@ namespace Scotch.Windows.Tests;
 
 public class WindowsIntegrationTests
 {
+    [Fact] public void Size_menu_selects_one_of_three_proportional_scales()
+    {
+        Sta.Run(()=>
+        {
+            var chosen=Scotch.Core.ClockSizePreset.Medium;
+            using var tray=new TrayService(()=>{},()=>{},()=>{},()=>{},()=>{},size=>chosen=size);
+            var menu=tray.Menu.Items.OfType<System.Windows.Forms.ToolStripMenuItem>().Single(x=>x.Text=="Size");
+            Assert.Equal(3,menu.DropDownItems.Count);
+            foreach(var preset in new[]{Scotch.Core.ClockSizePreset.Small,Scotch.Core.ClockSizePreset.Medium,Scotch.Core.ClockSizePreset.Large})
+            {
+                ((System.Windows.Forms.ToolStripMenuItem)menu.DropDownItems[(int)preset]).PerformClick();
+                Assert.Equal(preset,chosen);
+                tray.Refresh(true,false,false,preset);
+                Assert.Single(menu.DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>().Where(x=>x.Checked));
+                var window=new ClockWindow();
+                try
+                {
+                    window.ApplySize(preset);
+                    var scale=(System.Windows.Media.ScaleTransform)((System.Windows.FrameworkElement)window.FindName("Face")).LayoutTransform;
+                    var expected=preset==Scotch.Core.ClockSizePreset.Small?0.75:preset==Scotch.Core.ClockSizePreset.Large?1.5:1;
+                    Assert.Equal(expected,scale.ScaleX);Assert.Equal(expected,scale.ScaleY);
+                    window.Measure(new System.Windows.Size(double.PositiveInfinity,double.PositiveInfinity));
+                    Assert.True(window.DesiredSize.Width>0);
+                }
+                finally{window.Close();}
+            }
+        });
+    }
     [Fact] public void Shell_is_topmost_nonactivating_and_off_taskbar()
     {
         Sta.Run(()=>
