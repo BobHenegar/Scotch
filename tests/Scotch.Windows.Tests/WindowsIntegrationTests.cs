@@ -42,6 +42,43 @@ public class WindowsIntegrationTests
     [System.Runtime.InteropServices.DllImport("user32.dll",CharSet=System.Runtime.InteropServices.CharSet.Unicode)]
     private static extern nint SendMessage(nint hwnd,uint message,nint wParam,nint lParam);
 
+    [Fact] public void Windows_regional_format_change_refreshes_visible_clock_without_restart()
+    {
+        Sta.Run(()=>
+        {
+            const uint userDefault=0x400,shortTime=0x79;
+            var buffer=new System.Text.StringBuilder(256);
+            Assert.True(GetLocaleInfo(userDefault,shortTime,buffer,buffer.Capacity)>0);
+            var original=buffer.ToString();
+            var window=new ClockWindow();
+            try
+            {
+                window.Show(); // Populate the same culture cache used in a normal running clock.
+                Assert.True(SetLocaleInfo(userDefault,shortTime,"HH':'mm' ScotchTest'"));
+                var hwnd=new System.Windows.Interop.WindowInteropHelper(window).Handle;
+                var name=System.Runtime.InteropServices.Marshal.StringToHGlobalUni("intl");
+                try {SendMessage(hwnd,0x1A,0,name);}
+                finally {System.Runtime.InteropServices.Marshal.FreeHGlobal(name);}
+                var frame=new System.Windows.Threading.DispatcherFrame();
+                var timer=new System.Windows.Threading.DispatcherTimer {Interval=TimeSpan.FromMilliseconds(250)};
+                timer.Tick+=(_,_)=>{timer.Stop();frame.Continue=false;};
+                timer.Start();System.Windows.Threading.Dispatcher.PushFrame(frame);
+                Assert.Contains("ScotchTest",((System.Windows.Controls.TextBlock)window.FindName("TimeLabel")).Text);
+            }
+            finally
+            {
+                Assert.True(SetLocaleInfo(userDefault,shortTime,original));
+                System.Globalization.CultureInfo.CurrentCulture.ClearCachedData();
+                window.Close();
+            }
+        });
+    }
+    [System.Runtime.InteropServices.DllImport("kernel32.dll",CharSet=System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern int GetLocaleInfo(uint locale,uint type,System.Text.StringBuilder data,int length);
+    [System.Runtime.InteropServices.DllImport("kernel32.dll",CharSet=System.Runtime.InteropServices.CharSet.Unicode,SetLastError=true)]
+    [return:System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool SetLocaleInfo(uint locale,uint type,string data);
+
     [Fact] public void Palette_uses_light_dark_accent_and_contrast_colors()
     {
         var accent=Colors.CornflowerBlue;
