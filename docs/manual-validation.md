@@ -22,3 +22,6 @@ Status: pending on a user's Windows desktop. CI build/unit tests do not establis
 - [ ] Enable Launch at Sign-in and sign out/in; one instance starts. Disable and verify no later automatic launch.
 - [ ] Start a second instance: existing clock remains and no second tray icon appears.
 - [ ] Exit from tray: window/icon disappear and hotkey is released.
+
+- [ ] Select Small, Medium, and Large from Size; text, date, padding, and status dot scale together, selected item is checked, and choice survives restart.
+- [ ] Enlarge near the right/bottom edge while paused and while avoiding: clock remains within its work area and avoidance/return continue normally.

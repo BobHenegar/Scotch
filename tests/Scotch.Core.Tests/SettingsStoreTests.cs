@@ -6,6 +6,18 @@ public sealed class SettingsStoreTests : IDisposable
 {
     private readonly string folder=Path.Combine(Path.GetTempPath(),"ScotchTests",Guid.NewGuid().ToString("N"));
     private string FilePath => Path.Combine(folder,"settings.json");
+    [Fact] public void Size_roundtrips_and_older_settings_default_to_medium()
+    {
+        var store=new SettingsStore(FilePath);
+        foreach(var size in new[]{ClockSizePreset.Small,ClockSizePreset.Medium,ClockSizePreset.Large})
+        {
+            Assert.True(store.TrySave(new ClockSettings(Size:size),out var error),error);
+            Assert.Equal(size,store.Load().Size);
+        }
+        File.WriteAllText(FilePath,"{\"ShowDate\":true}");
+        Assert.Equal(ClockSizePreset.Medium,store.Load().Size);
+        Assert.False(store.TrySave(new ClockSettings(Size:(ClockSizePreset)99),out _));
+    }
     [Fact] public void Missing_and_corrupt_settings_use_defaults()
     {
         var store=new SettingsStore(FilePath);

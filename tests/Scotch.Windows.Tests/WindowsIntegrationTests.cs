@@ -7,6 +7,76 @@ namespace Scotch.Windows.Tests;
 
 public class WindowsIntegrationTests
 {
+    [Fact] public void Size_menu_selects_exactly_one_of_three_presets()
+    {
+        Sta.Run(()=>
+        {
+            var chosen=Scotch.Core.ClockSizePreset.Medium;
+            using var tray=new TrayService(()=>{},()=>{},()=>{},()=>{},()=>{},size=>chosen=size);
+            var menu=tray.Menu.Items.OfType<System.Windows.Forms.ToolStripMenuItem>().Single(x=>x.Text=="Size");
+            Assert.Equal(3,menu.DropDownItems.Count);
+            foreach(var preset in new[]{Scotch.Core.ClockSizePreset.Small,Scotch.Core.ClockSizePreset.Medium,Scotch.Core.ClockSizePreset.Large})
+            {
+                ((System.Windows.Forms.ToolStripMenuItem)menu.DropDownItems[(int)preset]).PerformClick();
+                Assert.Equal(preset,chosen);
+                tray.Refresh(true,false,false,preset);
+                Assert.Single(menu.DropDownItems.OfType<System.Windows.Forms.ToolStripMenuItem>(),x=>x.Checked);
+            }
+        });
+    }
+    [Fact] public void Live_resize_stays_on_screen_and_preserves_avoidance_mode()
+    {
+        Sta.Run(()=>
+        {
+            var path=System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Scotch","settings.json");
+            var original=System.IO.File.Exists(path)?System.IO.File.ReadAllText(path):null;
+            ClockWindow? window=null;
+            try
+            {
+                var screen=System.Windows.Forms.Screen.PrimaryScreen!;
+                var store=new Scotch.Core.SettingsStore(path);
+                Assert.True(store.TrySave(new Scotch.Core.ClockSettings(MonitorId:screen.DeviceName,Home:new(999999,999999)),out _));
+                window=new ClockWindow();window.Show();
+                var hwnd=new System.Windows.Interop.WindowInteropHelper(window).Handle;
+                foreach(var enabled in new[]{false,true})
+                {
+                    SendMessage(hwnd,0x312,HotkeyService.Id,0);
+                    var widths=new List<int>();
+                    foreach(var size in new[]{Scotch.Core.ClockSizePreset.Small,Scotch.Core.ClockSizePreset.Medium,Scotch.Core.ClockSizePreset.Large})
+                    {
+                        window.ApplySize(size);
+                        var frame=new System.Windows.Threading.DispatcherFrame();
+                        var timer=new System.Windows.Threading.DispatcherTimer {Interval=TimeSpan.FromMilliseconds(150)};
+                        timer.Tick+=(_,_)=>{timer.Stop();frame.Continue=false;};
+                        timer.Start();System.Windows.Threading.Dispatcher.PushFrame(frame);
+                        Assert.True(GetWindowRect(hwnd,out var bounds));
+                        var area=System.Windows.Forms.Screen.FromHandle(hwnd).WorkingArea;
+                        Assert.InRange(bounds.Left,area.Left,area.Right);
+                        Assert.InRange(bounds.Top,area.Top,area.Bottom);
+                        Assert.InRange(bounds.Right,area.Left,area.Right);
+                        Assert.InRange(bounds.Bottom,area.Top,area.Bottom);
+                        widths.Add(bounds.Right-bounds.Left);
+                        Assert.Equal(enabled,(GetWindowLongPtr(hwnd,-20).ToInt64()&0x20)!=0);
+                        Assert.Equal(size,store.Load().Size);
+                    }
+                    Assert.True(widths[0]<widths[1] && widths[1]<widths[2]);
+                    Assert.InRange(Math.Abs(widths[0]-widths[1]*0.75),0,2);
+                    Assert.InRange(Math.Abs(widths[2]-widths[1]*1.5),0,2);
+                }
+            }
+            finally
+            {
+                window?.Close();
+                if(original is null)System.IO.File.Delete(path);else System.IO.File.WriteAllText(path,original);
+            }
+        });
+    }
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct NativeRect {public int Left,Top,Right,Bottom;}
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [return:System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(nint hwnd,out NativeRect rect);
+
     [Fact] public void Shell_is_topmost_nonactivating_and_off_taskbar()
     {
         Sta.Run(()=>

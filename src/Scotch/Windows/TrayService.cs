@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using Forms=System.Windows.Forms;
+using Scotch.Core;
 
 namespace Scotch.Windows;
 
@@ -10,20 +11,25 @@ public sealed class TrayService : IDisposable
     private readonly Forms.NotifyIcon notify;
     private readonly Forms.ToolStripMenuItem avoidance,date,startup;
     private Icon icon;
+    private readonly Forms.ToolStripMenuItem[] sizeItems;
     public Forms.ContextMenuStrip Menu {get;}=new();
-    public TrayService(Action toggle,Action toggleDate,Action reset,Action toggleStartup,Action exit)
+    public TrayService(Action toggle,Action toggleDate,Action reset,Action toggleStartup,Action exit,Action<ClockSizePreset>? selectSize=null)
     {
         avoidance=new("Enable avoidance  (Ctrl+Alt+C)",null,(_,_)=>toggle());
         date=new("Show date",null,(_,_)=>toggleDate());
         startup=new("Launch at sign-in",null,(_,_)=>toggleStartup());
-        Menu.Items.AddRange([avoidance,date,new Forms.ToolStripSeparator(),new Forms.ToolStripMenuItem("Reset position",null,(_,_)=>reset()),startup,new Forms.ToolStripSeparator(),new Forms.ToolStripMenuItem("Exit",null,(_,_)=>exit())]);
+        var sizes=new Forms.ToolStripMenuItem("Size");
+        sizeItems=Enum.GetValues<ClockSizePreset>().Select(preset=>new Forms.ToolStripMenuItem(preset switch {ClockSizePreset.Small=>"Small (75%)",ClockSizePreset.Large=>"Large (150%)",_=>"Medium (100%)"},null,(_,_)=>selectSize?.Invoke(preset))).ToArray();
+        sizes.DropDownItems.AddRange(sizeItems);
+        Menu.Items.AddRange([avoidance,date,sizes,new Forms.ToolStripSeparator(),new Forms.ToolStripMenuItem("Reset position",null,(_,_)=>reset()),startup,new Forms.ToolStripSeparator(),new Forms.ToolStripMenuItem("Exit",null,(_,_)=>exit())]);
         icon=CreateIcon(Color.SteelBlue);
         notify=new Forms.NotifyIcon {Icon=icon,Text="Scotch · Ctrl+Alt+C pauses avoidance",ContextMenuStrip=Menu,Visible=true};
         notify.DoubleClick+=(_,_)=>toggle();
     }
-    public void Refresh(bool enabled,bool showDate,bool launchAtSignIn)
+    public void Refresh(bool enabled,bool showDate,bool launchAtSignIn,ClockSizePreset size=ClockSizePreset.Medium)
     {
         avoidance.Checked=enabled;date.Checked=showDate;startup.Checked=launchAtSignIn;
+        for(var i=0;i<sizeItems.Length;i++)sizeItems[i].Checked=i==(int)size;
         notify.Text=enabled?"Scotch · Avoidance on · Ctrl+Alt+C":"Scotch · Avoidance paused · Ctrl+Alt+C";
     }
     public void ApplyPalette(ClockPalette palette)
@@ -32,7 +38,19 @@ public sealed class TrayService : IDisposable
         var background=Convert(palette.Background);var foreground=Convert(palette.Foreground);
         Menu.BackColor=background;Menu.ForeColor=foreground;
         Menu.Renderer=new Forms.ToolStripProfessionalRenderer(new MenuColors(background,foreground));
-        foreach(Forms.ToolStripItem item in Menu.Items){item.BackColor=background;item.ForeColor=foreground;}
+        void ApplyItems(Forms.ToolStripItemCollection items)
+        {
+            foreach(Forms.ToolStripItem item in items)
+            {
+                item.BackColor=background;item.ForeColor=foreground;
+                if(item is Forms.ToolStripMenuItem parent && parent.HasDropDownItems)
+                {
+                    parent.DropDown.BackColor=background;parent.DropDown.ForeColor=foreground;
+                    parent.DropDown.Renderer=Menu.Renderer;ApplyItems(parent.DropDownItems);
+                }
+            }
+        }
+        ApplyItems(Menu.Items);
         var next=CreateIcon(Convert(palette.Accent));notify.Icon=next;icon.Dispose();icon=next;
     }
     public void ShowAtPointer()=>Menu.Show(Forms.Cursor.Position);
