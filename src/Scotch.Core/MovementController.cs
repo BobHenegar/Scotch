@@ -34,7 +34,7 @@ public sealed class MovementController(PointD home, PointD position)
         }
         else
         {
-            clearTime+=dt;
+            clearTime=Geometry.PathIsClear(Position,Home,pointer,size)?clearTime+dt:0;
             if(returning && !Geometry.PathIsClear(Position,Home,pointer,size))
             {target=null;returning=false;clearTime=0;}
             if(target is null && clearTime>=1 && Position!=Home && Geometry.PathIsClear(Position,Home,pointer,size)) Start(Home,true);
