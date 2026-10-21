@@ -18,7 +18,7 @@ public sealed class SettingsStore(string path)
     public bool TrySave(ClockSettings settings,out string? error)
     {
         error=null;
-        if(!settings.IsValid){error="Saved position is invalid.";return false;}
+        if(!settings.IsValid){error="Saved preferences are invalid.";return false;}
         var temp=path+"."+Guid.NewGuid().ToString("N")+".tmp";
         try
         {

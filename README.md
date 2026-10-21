@@ -11,6 +11,7 @@ Download **Scotch-win-x64** from the latest successful [Build Scotch workflow](h
 - Move the mouse near the clock: it slides away quickly. While avoidance is on, clicks also pass through to the window beneath it.
 - Move clear of its path home: it waits one second, then returns over about two seconds.
 - Press **Ctrl+Alt+C** to freeze or resume avoidance. When paused, drag the clock to choose a new home.
+- Choose **Size → Small (75%), Medium (100%), or Large (150%)** from the tray menu. The complete clock scales immediately and remembers your choice. Medium matches the original size.
 - Right-click the notification-area clock icon for avoidance, date display, reset position, launch at sign-in, and Exit. When paused, the clock also has a right-click menu.
 - An outlined status dot means avoidance is paused. Hovering the tray icon shows its status and hotkey.
 

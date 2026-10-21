@@ -45,15 +45,15 @@ public partial class ClockWindow : Window
         SourceInitialized+=OnSourceInitialized;
         SizeChanged+=(_,_)=>QueuePlacement(false);
         Closed+=OnClosed;
-        UpdateClock();ApplyTheme();
+        UpdateClock();ApplySize(settings.Size);ApplyTheme();
         Measure(new System.Windows.Size(double.PositiveInfinity,double.PositiveInfinity));
     }
-    private SizeD ClockSize => new(ActualWidth>0?ActualWidth:Math.Max(DesiredSize.Width,150),ActualHeight>0?ActualHeight:Math.Max(DesiredSize.Height,52));
+    private SizeD ClockSize => new(ActualWidth>0?ActualWidth:DesiredSize.Width>0?DesiredSize.Width:150,ActualHeight>0?ActualHeight:DesiredSize.Height>0?DesiredSize.Height:52);
     private void OnSourceInitialized(object? sender,EventArgs e)
     {
         hwnd=new WindowInteropHelper(this).Handle;
         source=HwndSource.FromHwnd(hwnd);source?.AddHook(WindowMessage);
-        tray=new TrayService(ToggleAvoidance,ToggleDate,ResetPosition,ToggleStartup,Close);
+        tray=new TrayService(ToggleAvoidance,ToggleDate,ResetPosition,ToggleStartup,Close,ApplySize);
         tray.Menu.Opening+=(_,_)=>RefreshControls();
         RefreshPlacement(true);ApplyTheme();RefreshControls();
         if(!hotkey.TryRegister(hwnd,out var error))
@@ -115,6 +115,17 @@ public partial class ClockWindow : Window
         elapsed.Restart();timer.Interval=TimeSpan.FromMilliseconds(movement.Enabled?33:1000);
         RefreshControls();
     }
+    public void ApplySize(ClockSizePreset preset)
+    {
+        if(!Enum.IsDefined(preset))throw new ArgumentOutOfRangeException(nameof(preset));
+        settings=settings with {Size=preset};
+        var scale=preset switch {ClockSizePreset.Small=>0.75,ClockSizePreset.Large=>1.5,_=>1d};
+        Face.LayoutTransform=new ScaleTransform(scale,scale);
+        if(hwnd!=0)
+        {
+            Save();UpdateLayout();QueuePlacement(false);RefreshControls();
+        }
+    }
     private void ToggleDate(){settings=settings with {ShowDate=!settings.ShowDate};Save();UpdateClock();RefreshControls();}
     private void ResetPosition()
     {
@@ -131,7 +142,7 @@ public partial class ClockWindow : Window
     {
         var enabled=movement?.Enabled??true;
         if(hwnd!=0)WindowInteraction.SetAvoidance(hwnd,enabled);
-        tray?.Refresh(enabled,settings.ShowDate,startup.IsEnabled);
+        tray?.Refresh(enabled,settings.ShowDate,startup.IsEnabled,settings.Size);
         var palette=theme.Read();var accent=new SolidColorBrush(palette.Accent);
         StatusDot.Fill=enabled?accent:Brushes.Transparent;StatusDot.Stroke=accent;
         ToolTip=enabled?"Avoidance on · Ctrl+Alt+C to pause":"Avoidance paused · Drag to set home · Ctrl+Alt+C to resume";
