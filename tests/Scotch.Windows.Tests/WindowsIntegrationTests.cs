@@ -19,6 +19,29 @@ public class WindowsIntegrationTests
             window.Close();
         });
     }
+    [Fact] public void Enabled_clock_passes_clicks_through_and_paused_clock_accepts_them()
+    {
+        Sta.Run(()=>
+        {
+            var window=new ClockWindow();
+            try
+            {
+                window.Show();
+                var hwnd=new System.Windows.Interop.WindowInteropHelper(window).Handle;
+                Assert.True((GetWindowLongPtr(hwnd,-20).ToInt64()&0x20)!=0);
+                Assert.True((GetWindowLongPtr(hwnd,-20).ToInt64()&0x08000000)!=0);
+                SendMessage(hwnd,0x312,HotkeyService.Id,0);
+                Assert.True((GetWindowLongPtr(hwnd,-20).ToInt64()&0x20)==0);
+                Assert.True((GetWindowLongPtr(hwnd,-20).ToInt64()&0x08000000)==0);
+            }
+            finally {window.Close();}
+        });
+    }
+    [System.Runtime.InteropServices.DllImport("user32.dll",EntryPoint="GetWindowLongPtrW")]
+    private static extern nint GetWindowLongPtr(nint hwnd,int index);
+    [System.Runtime.InteropServices.DllImport("user32.dll",CharSet=System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern nint SendMessage(nint hwnd,uint message,nint wParam,nint lParam);
+
     [Fact] public void Palette_uses_light_dark_accent_and_contrast_colors()
     {
         var accent=Colors.CornflowerBlue;

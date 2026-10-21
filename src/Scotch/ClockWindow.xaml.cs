@@ -9,6 +9,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Scotch.Core;
+using Geometry=Scotch.Core.Geometry;
 using Scotch.Windows;
 
 namespace Scotch;
