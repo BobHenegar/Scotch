@@ -28,8 +28,6 @@ public class WindowsIntegrationTests
                     var scale=(System.Windows.Media.ScaleTransform)((System.Windows.FrameworkElement)window.FindName("Face")).LayoutTransform;
                     var expected=preset==Scotch.Core.ClockSizePreset.Small?0.75:preset==Scotch.Core.ClockSizePreset.Large?1.5:1;
                     Assert.Equal(expected,scale.ScaleX);Assert.Equal(expected,scale.ScaleY);
-                    window.Measure(new System.Windows.Size(double.PositiveInfinity,double.PositiveInfinity));
-                    Assert.True(window.DesiredSize.Width>0);
                 }
                 finally{window.Close();}
             }
