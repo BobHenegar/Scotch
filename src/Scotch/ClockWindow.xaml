@@ -1,0 +1,15 @@
+<Window x:Class="Scotch.ClockWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Scotch" WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent"
+        SizeToContent="WidthAndHeight" Topmost="True" ShowInTaskbar="False" ShowActivated="False"
+        Focusable="False" UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <Border x:Name="Face" CornerRadius="10" BorderThickness="1" Padding="15,9" MouseLeftButtonDown="OnDrag" MouseRightButtonUp="OnContextMenu">
+        <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="14"/></Grid.ColumnDefinitions>
+            <StackPanel MinWidth="105">
+                <TextBlock x:Name="TimeLabel" FontFamily="Segoe UI" FontSize="28" FontWeight="SemiBold"/>
+                <TextBlock x:Name="DateLabel" FontFamily="Segoe UI" FontSize="12" Margin="1,1,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+            <Ellipse x:Name="StatusDot" Grid.Column="1" Width="6" Height="6" StrokeThickness="1" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        </Grid>
+    </Border>
+</Window>

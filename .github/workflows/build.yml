@@ -1,0 +1,46 @@
+name: Build Scotch
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Test core
+        run: dotnet test tests/Scotch.Core.Tests -c Release --logger "console;verbosity=normal"
+      - name: Test Windows integration
+        if: ${{ !cancelled() }}
+        run: dotnet test tests/Scotch.Windows.Tests -c Release --logger "console;verbosity=normal"
+      - name: Build solution
+        run: dotnet build Scotch.sln -c Release --no-restore
+      - name: Publish portable Windows build
+        run: dotnet publish src/Scotch/Scotch.csproj -c Release -r win-x64 --self-contained true -o artifacts/Scotch
+      - name: Verify portable output and zip
+        shell: pwsh
+        run: |
+          $required = 'Scotch.exe', 'Scotch.dll', 'Scotch.Core.dll', 'coreclr.dll', 'PresentationFramework.dll'
+          foreach ($file in $required) {
+            if (!(Test-Path "artifacts/Scotch/$file")) { throw "Missing portable runtime file: $file" }
+          }
+          Copy-Item README.md artifacts/Scotch/README.md
+          Compress-Archive -Path artifacts/Scotch/* -DestinationPath artifacts/Scotch-win-x64.zip
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path artifacts/Scotch-win-x64.zip))
+          try {
+            foreach ($file in $required) {
+              if ($zip.Entries.FullName -notcontains $file) { throw "ZIP missing $file" }
+            }
+            Write-Host "Portable ZIP verified: $($zip.Entries.Count) entries."
+          } finally { $zip.Dispose() }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Scotch-win-x64
+          path: artifacts/Scotch/
+          if-no-files-found: error

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms><ApplicationManifest>app.manifest</ApplicationManifest><AssemblyName>Scotch</AssemblyName><RootNamespace>Scotch</RootNamespace><NoWarn>$(NoWarn);WFO0003</NoWarn></PropertyGroup>
+  <!-- WPF owns process DPI awareness through app.manifest; WinForms is used only for the tray. -->
+  <ItemGroup><ProjectReference Include="../Scotch.Core/Scotch.Core.csproj"/></ItemGroup>
+  <ItemGroup><Using Remove="System.Windows.Forms"/><Using Remove="System.Drawing"/></ItemGroup>
+</Project>
